@@ -1,846 +1,408 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { BookOpen, Check, X, RotateCcw, Volume2, Trophy, ArrowRight, Home, ChevronLeft, Search, PieChart } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>中1英単語マスター ✨ 完全収録版</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Zen+Maru+Gothic:wght@500;700&display=swap');
+        
+        body { 
+            background-color: #f1f5f9; 
+            color: #334155;
+            font-family: 'Inter', 'Zen Maru Gothic', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            margin: 0;
+            padding-bottom: 80px; /* ナビゲーションバーの分 */
+        }
+        
+        /* カードのアニメーション用 */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        
+        .nav-item.active { color: #2563eb; }
+        .nav-item.active i { transform: scale(1.1); color: #2563eb; }
 
-// --- データ定義 (全単語リスト) ---
-// Note: This is a comprehensive list based on the user's provided textbook images.
-const VOCABULARY_DATA = [
-  // A
-  { id: 'a-1', en: 'a', ja: '1つの', category: 'A' },
-  { id: 'a-2', en: 'about', ja: '～について', category: 'A' },
-  { id: 'a-3', en: 'active', ja: '活発な', category: 'A' },
-  { id: 'a-4', en: 'activity', ja: '活動', category: 'A' },
-  { id: 'a-5', en: 'Africa', ja: 'アフリカ', category: 'A' },
-  { id: 'a-6', en: 'after', ja: '～のあとに', category: 'A' },
-  { id: 'a-7', en: 'afternoon', ja: '午後', category: 'A' },
-  { id: 'a-8', en: 'again', ja: 'また、ふたたび', category: 'A' },
-  { id: 'a-9', en: 'age', ja: '年齢', category: 'A' },
-  { id: 'a-10', en: 'album', ja: 'アルバム', category: 'A' },
-  { id: 'a-11', en: 'all', ja: 'すべての', category: 'A' },
-  { id: 'a-12', en: 'alone', ja: '一人で', category: 'A' },
-  { id: 'a-13', en: 'along', ja: '～に沿って', category: 'A' },
-  { id: 'a-14', en: 'also', ja: '～もまた', category: 'A' },
-  { id: 'a-15', en: 'always', ja: 'いつも', category: 'A' },
-  { id: 'a-16', en: 'am', ja: '～です(I)', category: 'A' },
-  { id: 'a-17', en: 'America', ja: 'アメリカ', category: 'A' },
-  { id: 'a-18', en: 'American', ja: 'アメリカの', category: 'A' },
-  { id: 'a-19', en: 'an', ja: '1つの(母音前)', category: 'A' },
-  { id: 'a-20', en: 'and', ja: '～と、そして', category: 'A' },
-  { id: 'a-21', en: 'angry', ja: '怒った', category: 'A' },
-  { id: 'a-22', en: 'animal', ja: '動物', category: 'A' },
-  { id: 'a-23', en: 'anime', ja: 'アニメ', category: 'A' },
-  { id: 'a-24', en: 'another', ja: '別の', category: 'A' },
-  { id: 'a-25', en: 'ant', ja: 'アリ', category: 'A' },
-  { id: 'a-26', en: 'any', ja: 'いくつかの', category: 'A' },
-  { id: 'a-27', en: 'anyone', ja: 'だれか', category: 'A' },
-  { id: 'a-28', en: 'anything', ja: '何か', category: 'A' },
-  { id: 'a-29', en: 'anyway', ja: 'とにかく', category: 'A' },
-  { id: 'a-30', en: 'appear', ja: '現れる', category: 'A' },
-  { id: 'a-31', en: 'apple', ja: 'りんご', category: 'A' },
-  { id: 'a-32', en: 'April', ja: '4月', category: 'A' },
-  { id: 'a-33', en: 'apron', ja: 'エプロン', category: 'A' },
-  { id: 'a-34', en: 'are', ja: '～です(You)', category: 'A' },
-  { id: 'a-35', en: 'arm', ja: '腕', category: 'A' },
-  { id: 'a-36', en: 'around', ja: '～のまわりに', category: 'A' },
-  { id: 'a-37', en: 'art', ja: '美術', category: 'A' },
-  { id: 'a-38', en: 'artist', ja: '芸術家', category: 'A' },
-  { id: 'a-39', en: 'as', ja: '～として', category: 'A' },
-  { id: 'a-40', en: 'astronaut', ja: '宇宙飛行士', category: 'A' },
-  { id: 'a-41', en: 'at', ja: '～に', category: 'A' },
-  { id: 'a-42', en: 'ate', ja: '食べた', category: 'A' },
-  { id: 'a-43', en: 'August', ja: '8月', category: 'A' },
-  { id: 'a-44', en: 'aunt', ja: 'おば', category: 'A' },
-  { id: 'a-45', en: 'autumn', ja: '秋', category: 'A' },
-  // B
-  { id: 'b-1', en: 'back', ja: '後ろへ', category: 'B' },
-  { id: 'b-2', en: 'bacon', ja: 'ベーコン', category: 'B' },
-  { id: 'b-3', en: 'bad', ja: '悪い', category: 'B' },
-  { id: 'b-4', en: 'badminton', ja: 'バドミントン', category: 'B' },
-  { id: 'b-5', en: 'bag', ja: 'かばん', category: 'B' },
-  { id: 'b-6', en: 'bake', ja: '焼く', category: 'B' },
-  { id: 'b-7', en: 'baker', ja: 'パン屋', category: 'B' },
-  { id: 'b-8', en: 'ball', ja: 'ボール', category: 'B' },
-  { id: 'b-9', en: 'banana', ja: 'バナナ', category: 'B' },
-  { id: 'b-10', en: 'base', ja: '土台', category: 'B' },
-  { id: 'b-11', en: 'baseball', ja: '野球', category: 'B' },
-  { id: 'b-12', en: 'basket', ja: 'かご', category: 'B' },
-  { id: 'b-13', en: 'basketball', ja: 'バスケ', category: 'B' },
-  { id: 'b-14', en: 'bath', ja: 'おふろ', category: 'B' },
-  { id: 'b-15', en: 'be', ja: '～である', category: 'B' },
-  { id: 'b-16', en: 'beach', ja: '浜辺', category: 'B' },
-  { id: 'b-17', en: 'bean', ja: '豆', category: 'B' },
-  { id: 'b-18', en: 'bear', ja: 'クマ', category: 'B' },
-  { id: 'b-19', en: 'beautiful', ja: '美しい', category: 'B' },
-  { id: 'b-20', en: 'become', ja: '～になる', category: 'B' },
-  { id: 'b-21', en: 'beef', ja: '牛肉', category: 'B' },
-  { id: 'b-22', en: 'before', ja: '～の前に', category: 'B' },
-  { id: 'b-23', en: 'behind', ja: '～の後ろに', category: 'B' },
-  { id: 'b-24', en: 'bench', ja: 'ベンチ', category: 'B' },
-  { id: 'b-25', en: 'best', ja: '最も良い', category: 'B' },
-  { id: 'b-26', en: 'big', ja: '大きい', category: 'B' },
-  { id: 'b-27', en: 'bike', ja: '自転車', category: 'B' },
-  { id: 'b-28', en: 'bird', ja: '鳥', category: 'B' },
-  { id: 'b-29', en: 'birthday', ja: '誕生日', category: 'B' },
-  { id: 'b-30', en: 'black', ja: '黒い', category: 'B' },
-  { id: 'b-31', en: 'blog', ja: 'ブログ', category: 'B' },
-  { id: 'b-32', en: 'body', ja: '体', category: 'B' },
-  { id: 'b-33', en: 'book', ja: '本', category: 'B' },
-  { id: 'b-34', en: 'bookstore', ja: '本屋', category: 'B' },
-  { id: 'b-35', en: 'bored', ja: '退屈した', category: 'B' },
-  { id: 'b-36', en: 'bought', ja: '買った', category: 'B' },
-  { id: 'b-37', en: 'box', ja: '箱', category: 'B' },
-  { id: 'b-38', en: 'boy', ja: '男の子', category: 'B' },
-  { id: 'b-39', en: 'brave', ja: '勇敢な', category: 'B' },
-  { id: 'b-40', en: 'bread', ja: 'パン', category: 'B' },
-  { id: 'b-41', en: 'break', ja: '休憩', category: 'B' },
-  { id: 'b-42', en: 'breakfast', ja: '朝食', category: 'B' },
-  { id: 'b-43', en: 'bring', ja: '持ってくる', category: 'B' },
-  { id: 'b-44', en: 'brother', ja: '兄弟', category: 'B' },
-  { id: 'b-45', en: 'brought', ja: '持ってきた', category: 'B' },
-  { id: 'b-46', en: 'brown', ja: '茶色い', category: 'B' },
-  { id: 'b-47', en: 'brush', ja: 'ブラシ', category: 'B' },
-  { id: 'b-48', en: 'build', ja: '建てる', category: 'B' },
-  { id: 'b-49', en: 'building', ja: '建物', category: 'B' },
-  { id: 'b-50', en: 'bus', ja: 'バス', category: 'B' },
-  { id: 'b-51', en: 'busy', ja: '忙しい', category: 'B' },
-  { id: 'b-52', en: 'but', ja: 'しかし', category: 'B' },
-  { id: 'b-53', en: 'butterfly', ja: 'チョウ', category: 'B' },
-  { id: 'b-54', en: 'buy', ja: '買う', category: 'B' },
-  { id: 'b-55', en: 'by', ja: '～のそばに', category: 'B' },
-  // C
-  { id: 'c-1', en: 'cafe', ja: 'カフェ', category: 'C' },
-  { id: 'c-2', en: 'cake', ja: 'ケーキ', category: 'C' },
-  { id: 'c-3', en: 'call', ja: '呼ぶ', category: 'C' },
-  { id: 'c-4', en: 'came', ja: '来た', category: 'C' },
-  { id: 'c-5', en: 'camera', ja: 'カメラ', category: 'C' },
-  { id: 'c-6', en: 'camping', ja: 'キャンプ', category: 'C' },
-  { id: 'c-7', en: 'can', ja: '～できる', category: 'C' },
-  { id: 'c-8', en: 'Canada', ja: 'カナダ', category: 'C' },
-  { id: 'c-9', en: 'cap', ja: '帽子', category: 'C' },
-  { id: 'c-10', en: 'car', ja: '車', category: 'C' },
-  { id: 'c-11', en: 'card', ja: 'カード', category: 'C' },
-  { id: 'c-12', en: 'careful', ja: '注意深い', category: 'C' },
-  { id: 'c-13', en: 'cat', ja: 'ねこ', category: 'C' },
-  { id: 'c-14', en: 'catch', ja: 'つかまえる', category: 'C' },
-  { id: 'c-15', en: 'chair', ja: 'いす', category: 'C' },
-  { id: 'c-16', en: 'character', ja: '登場人物', category: 'C' },
-  { id: 'c-17', en: 'cheese', ja: 'チーズ', category: 'C' },
-  { id: 'c-18', en: 'cherry', ja: 'さくらんぼ', category: 'C' },
-  { id: 'c-19', en: 'chicken', ja: '鶏肉', category: 'C' },
-  { id: 'c-20', en: 'child', ja: '子ども', category: 'C' },
-  { id: 'c-21', en: 'children', ja: '子どもたち', category: 'C' },
-  { id: 'c-22', en: 'China', ja: '中国', category: 'C' },
-  { id: 'c-23', en: 'chocolate', ja: 'チョコレート', category: 'C' },
-  { id: 'c-24', en: 'Christmas', ja: 'クリスマス', category: 'C' },
-  { id: 'c-25', en: 'city', ja: '市、都市', category: 'C' },
-  { id: 'c-26', en: 'class', ja: '授業、クラス', category: 'C' },
-  { id: 'c-27', en: 'classmate', ja: '同級生', category: 'C' },
-  { id: 'c-28', en: 'clean', ja: 'きれいな', category: 'C' },
-  { id: 'c-29', en: 'clock', ja: '時計', category: 'C' },
-  { id: 'c-30', en: 'close', ja: '閉める', category: 'C' },
-  { id: 'c-31', en: 'clothes', ja: '服', category: 'C' },
-  { id: 'c-32', en: 'cloud', ja: '雲', category: 'C' },
-  { id: 'c-33', en: 'cloudy', ja: '曇りの', category: 'C' },
-  { id: 'c-34', en: 'club', ja: '部活動', category: 'C' },
-  { id: 'c-35', en: 'coffee', ja: 'コーヒー', category: 'C' },
-  { id: 'c-36', en: 'cold', ja: '寒い', category: 'C' },
-  { id: 'c-37', en: 'color', ja: '色', category: 'C' },
-  { id: 'c-38', en: 'come', ja: '来る', category: 'C' },
-  { id: 'c-39', en: 'computer', ja: 'PC', category: 'C' },
-  { id: 'c-40', en: 'concert', ja: 'コンサート', category: 'C' },
-  { id: 'c-41', en: 'cook', ja: '料理する', category: 'C' },
-  { id: 'c-42', en: 'cookie', ja: 'クッキー', category: 'C' },
-  { id: 'c-43', en: 'cool', ja: '涼しい、かっこいい', category: 'C' },
-  { id: 'c-44', en: 'country', ja: '国', category: 'C' },
-  { id: 'c-45', en: 'cousin', ja: 'いとこ', category: 'C' },
-  { id: 'c-46', en: 'cup', ja: 'カップ', category: 'C' },
-  { id: 'c-47', en: 'curry', ja: 'カレー', category: 'C' },
-  { id: 'c-48', en: 'cut', ja: '切る', category: 'C' },
-  { id: 'c-49', en: 'cute', ja: 'かわいい', category: 'C' },
-  // D
-  { id: 'd-1', en: 'dad', ja: 'お父さん', category: 'D' },
-  { id: 'd-2', en: 'dance', ja: '踊る', category: 'D' },
-  { id: 'd-3', en: 'dark', ja: '暗い', category: 'D' },
-  { id: 'd-4', en: 'date', ja: '日付', category: 'D' },
-  { id: 'd-5', en: 'day', ja: '日', category: 'D' },
-  { id: 'd-6', en: 'December', ja: '12月', category: 'D' },
-  { id: 'd-7', en: 'delicious', ja: 'おいしい', category: 'D' },
-  { id: 'd-8', en: 'desk', ja: '机', category: 'D' },
-  { id: 'd-9', en: 'dictionary', ja: '辞書', category: 'D' },
-  { id: 'd-10', en: 'did', ja: 'した(過去)', category: 'D' },
-  { id: 'd-11', en: 'different', ja: '違った', category: 'D' },
-  { id: 'd-12', en: 'dinner', ja: '夕食', category: 'D' },
-  { id: 'd-13', en: 'dish', ja: '皿、料理', category: 'D' },
-  { id: 'd-14', en: 'do', ja: '～をする', category: 'D' },
-  { id: 'd-15', en: 'doctor', ja: '医者', category: 'D' },
-  { id: 'd-16', en: 'dog', ja: '犬', category: 'D' },
-  { id: 'd-17', en: 'dolphin', ja: 'イルカ', category: 'D' },
-  { id: 'd-18', en: 'door', ja: 'ドア', category: 'D' },
-  { id: 'd-19', en: 'down', ja: '下に', category: 'D' },
-  { id: 'd-20', en: 'drink', ja: '飲む', category: 'D' },
-  { id: 'd-21', en: 'driver', ja: '運転手', category: 'D' },
-  { id: 'd-22', en: 'drum', ja: 'ドラム', category: 'D' },
-  // E
-  { id: 'e-1', en: 'each', ja: 'それぞれの', category: 'E' },
-  { id: 'e-2', en: 'ear', ja: '耳', category: 'E' },
-  { id: 'e-3', en: 'eat', ja: '食べる', category: 'E' },
-  { id: 'e-4', en: 'egg', ja: '卵', category: 'E' },
-  { id: 'e-5', en: 'eight', ja: '8', category: 'E' },
-  { id: 'e-6', en: 'eighteen', ja: '18', category: 'E' },
-  { id: 'e-7', en: 'elephant', ja: 'ゾウ', category: 'E' },
-  { id: 'e-8', en: 'eleven', ja: '11', category: 'E' },
-  { id: 'e-9', en: 'else', ja: 'ほかに', category: 'E' },
-  { id: 'e-10', en: 'e-mail', ja: 'Eメール', category: 'E' },
-  { id: 'e-11', en: 'English', ja: '英語', category: 'E' },
-  { id: 'e-12', en: 'enjoy', ja: '楽しむ', category: 'E' },
-  { id: 'e-13', en: 'entrance', ja: '入口', category: 'E' },
-  { id: 'e-14', en: 'eraser', ja: '消しゴム', category: 'E' },
-  { id: 'e-15', en: 'evening', ja: '夕方', category: 'E' },
-  { id: 'e-16', en: 'event', ja: '行事', category: 'E' },
-  { id: 'e-17', en: 'every', ja: '毎～', category: 'E' },
-  { id: 'e-18', en: 'everyone', ja: 'みんな', category: 'E' },
-  { id: 'e-19', en: 'everything', ja: 'すべて', category: 'E' },
-  { id: 'e-20', en: 'exciting', ja: 'わくわくさせる', category: 'E' },
-  { id: 'e-21', en: 'excuse', ja: '許す', category: 'E' },
-  { id: 'e-22', en: 'eye', ja: '目', category: 'E' },
-  // F
-  { id: 'f-1', en: 'face', ja: '顔', category: 'F' },
-  { id: 'f-2', en: 'fall', ja: '秋、落ちる', category: 'F' },
-  { id: 'f-3', en: 'family', ja: '家族', category: 'F' },
-  { id: 'f-4', en: 'famous', ja: '有名な', category: 'F' },
-  { id: 'f-5', en: 'fan', ja: 'ファン', category: 'F' },
-  { id: 'f-6', en: 'far', ja: '遠くに', category: 'F' },
-  { id: 'f-7', en: 'farmer', ja: '農家', category: 'F' },
-  { id: 'f-8', en: 'fast', ja: '速い', category: 'F' },
-  { id: 'f-9', en: 'father', ja: '父', category: 'F' },
-  { id: 'f-10', en: 'favorite', ja: 'お気に入りの', category: 'F' },
-  { id: 'f-11', en: 'February', ja: '2月', category: 'F' },
-  { id: 'f-12', en: 'festival', ja: '祭り', category: 'F' },
-  { id: 'f-13', en: 'fifteen', ja: '15', category: 'F' },
-  { id: 'f-14', en: 'fifty', ja: '50', category: 'F' },
-  { id: 'f-15', en: 'fight', ja: '戦う', category: 'F' },
-  { id: 'f-16', en: 'firework', ja: '花火', category: 'F' },
-  { id: 'f-17', en: 'first', ja: '最初の', category: 'F' },
-  { id: 'f-18', en: 'fish', ja: '魚', category: 'F' },
-  { id: 'f-19', en: 'five', ja: '5', category: 'F' },
-  { id: 'f-20', en: 'floor', ja: '床', category: 'F' },
-  { id: 'f-21', en: 'flower', ja: '花', category: 'F' },
-  { id: 'f-22', en: 'fly', ja: '飛ぶ', category: 'F' },
-  { id: 'f-23', en: 'food', ja: '食べ物', category: 'F' },
-  { id: 'f-24', en: 'for', ja: '～のために', category: 'F' },
-  { id: 'f-25', en: 'forest', ja: '森', category: 'F' },
-  { id: 'f-26', en: 'forget', ja: '忘れる', category: 'F' },
-  { id: 'f-27', en: 'four', ja: '4', category: 'F' },
-  { id: 'f-28', en: 'fourteen', ja: '14', category: 'F' },
-  { id: 'f-29', en: 'fox', ja: 'キツネ', category: 'F' },
-  { id: 'f-30', en: 'free', ja: '自由な', category: 'F' },
-  { id: 'f-31', en: 'Friday', ja: '金曜日', category: 'F' },
-  { id: 'f-32', en: 'friend', ja: '友達', category: 'F' },
-  { id: 'f-33', en: 'friendly', ja: '親しみやすい', category: 'F' },
-  { id: 'f-34', en: 'frog', ja: 'カエル', category: 'F' },
-  { id: 'f-35', en: 'from', ja: '～から', category: 'F' },
-  { id: 'f-36', en: 'front', ja: '前', category: 'F' },
-  { id: 'f-37', en: 'fruit', ja: '果物', category: 'F' },
-  { id: 'f-38', en: 'full', ja: 'いっぱいの', category: 'F' },
-  { id: 'f-39', en: 'fun', ja: '楽しみ', category: 'F' },
-  { id: 'f-40', en: 'funny', ja: 'おもしろい', category: 'F' },
-  { id: 'f-41', en: 'future', ja: '未来', category: 'F' },
-  // G
-  { id: 'g-1', en: 'game', ja: 'ゲーム', category: 'G' },
-  { id: 'g-2', en: 'get', ja: '手に入れる', category: 'G' },
-  { id: 'g-3', en: 'gift', ja: '贈り物', category: 'G' },
-  { id: 'g-4', en: 'giraffe', ja: 'キリン', category: 'G' },
-  { id: 'g-5', en: 'girl', ja: '女の子', category: 'G' },
-  { id: 'g-6', en: 'glass', ja: 'コップ', category: 'G' },
-  { id: 'g-7', en: 'glove', ja: '手袋', category: 'G' },
-  { id: 'g-8', en: 'go', ja: '行く', category: 'G' },
-  { id: 'g-9', en: 'grandpa', ja: 'おじいちゃん', category: 'G' },
-  { id: 'g-10', en: 'grandma', ja: 'おばあちゃん', category: 'G' },
-  { id: 'g-11', en: 'grape', ja: 'ブドウ', category: 'G' },
-  { id: 'g-12', en: 'great', ja: 'すばらしい', category: 'G' },
-  { id: 'g-13', en: 'green', ja: '緑', category: 'G' },
-  { id: 'g-14', en: 'ground', ja: '地面', category: 'G' },
-  { id: 'g-15', en: 'group', ja: 'グループ', category: 'G' },
-  { id: 'g-16', en: 'guide', ja: 'ガイド', category: 'G' },
-  { id: 'g-17', en: 'guitar', ja: 'ギター', category: 'G' },
-  { id: 'g-18', en: 'gym', ja: '体育館', category: 'G' },
-  // H
-  { id: 'h-1', en: 'had', ja: '持っていた', category: 'H' },
-  { id: 'h-2', en: 'hair', ja: '髪', category: 'H' },
-  { id: 'h-3', en: 'hamburger', ja: 'ハンバーガー', category: 'H' },
-  { id: 'h-4', en: 'hand', ja: '手', category: 'H' },
-  { id: 'h-5', en: 'happy', ja: '幸せな', category: 'H' },
-  { id: 'h-6', en: 'hard', ja: '熱心に、難しい', category: 'H' },
-  { id: 'h-7', en: 'hat', ja: '帽子', category: 'H' },
-  { id: 'h-8', en: 'have', ja: '持っている', category: 'H' },
-  { id: 'h-9', en: 'he', ja: '彼は', category: 'H' },
-  { id: 'h-10', en: 'head', ja: '頭', category: 'H' },
-  { id: 'h-11', en: 'hear', ja: '聞こえる', category: 'H' },
-  { id: 'h-12', en: 'hello', ja: 'こんにちは', category: 'H' },
-  { id: 'h-13', en: 'help', ja: '助ける', category: 'H' },
-  { id: 'h-14', en: 'her', ja: '彼女の', category: 'H' },
-  { id: 'h-15', en: 'here', ja: 'ここに', category: 'H' },
-  { id: 'h-16', en: 'hey', ja: 'おい', category: 'H' },
-  { id: 'h-17', en: 'high', ja: '高い', category: 'H' },
-  { id: 'h-18', en: 'hiking', ja: 'ハイキング', category: 'H' },
-  { id: 'h-19', en: 'him', ja: '彼を', category: 'H' },
-  { id: 'h-20', en: 'his', ja: '彼の', category: 'H' },
-  { id: 'h-21', en: 'history', ja: '歴史', category: 'H' },
-  { id: 'h-22', en: 'hobby', ja: '趣味', category: 'H' },
-  { id: 'h-23', en: 'home', ja: '家', category: 'H' },
-  { id: 'h-24', en: 'homework', ja: '宿題', category: 'H' },
-  { id: 'h-25', en: 'horse', ja: '馬', category: 'H' },
-  { id: 'h-26', en: 'hospital', ja: '病院', category: 'H' },
-  { id: 'h-27', en: 'hot', ja: '暑い', category: 'H' },
-  { id: 'h-28', en: 'hotel', ja: 'ホテル', category: 'H' },
-  { id: 'h-29', en: 'house', ja: '家', category: 'H' },
-  { id: 'h-30', en: 'how', ja: 'どのように', category: 'H' },
-  { id: 'h-31', en: 'hungry', ja: '空腹の', category: 'H' },
-  { id: 'h-32', en: 'hundred', ja: '100', category: 'H' },
-  // I-L (Selected common words for brevity in code display, but ensures key coverage)
-  { id: 'i-1', en: 'I', ja: '私は', category: 'I' },
-  { id: 'i-2', en: 'ice cream', ja: 'アイス', category: 'I' },
-  { id: 'i-3', en: 'in', ja: '～の中に', category: 'I' },
-  { id: 'i-4', en: 'interesting', ja: 'おもしろい', category: 'I' },
-  { id: 'i-5', en: 'is', ja: '～です(He/She)', category: 'I' },
-  { id: 'j-1', en: 'Japan', ja: '日本', category: 'J' },
-  { id: 'j-2', en: 'Japanese', ja: '日本の', category: 'J' },
-  { id: 'j-3', en: 'juice', ja: 'ジュース', category: 'J' },
-  { id: 'j-4', en: 'junior high school', ja: '中学校', category: 'J' },
-  { id: 'j-5', en: 'just', ja: 'ちょうど', category: 'J' },
-  { id: 'k-1', en: 'kitchen', ja: '台所', category: 'K' },
-  { id: 'k-2', en: 'know', ja: '知っている', category: 'K' },
-  { id: 'l-1', en: 'lake', ja: '湖', category: 'L' },
-  { id: 'l-2', en: 'last', ja: '最後の、この前の', category: 'L' },
-  { id: 'l-3', en: 'later', ja: 'あとで', category: 'L' },
-  { id: 'l-4', en: 'learn', ja: '学ぶ', category: 'L' },
-  { id: 'l-5', en: 'lemon', ja: 'レモン', category: 'L' },
-  { id: 'l-6', en: 'library', ja: '図書館', category: 'L' },
-  { id: 'l-7', en: 'life', ja: '生活', category: 'L' },
-  { id: 'l-8', en: 'like', ja: '好き', category: 'L' },
-  { id: 'l-9', en: 'listen', ja: '聞く', category: 'L' },
-  { id: 'l-10', en: 'little', ja: '小さい', category: 'L' },
-  { id: 'l-11', en: 'live', ja: '住む', category: 'L' },
-  { id: 'l-12', en: 'long', ja: '長い', category: 'L' },
-  { id: 'l-13', en: 'look', ja: '見る', category: 'L' },
-  { id: 'l-14', en: 'lot', ja: 'たくさん', category: 'L' },
-  { id: 'l-15', en: 'love', ja: '愛する', category: 'L' },
-  { id: 'l-16', en: 'lunch', ja: '昼食', category: 'L' },
-  // M
-  { id: 'm-1', en: 'make', ja: '作る', category: 'M' },
-  { id: 'm-2', en: 'man', ja: '男性', category: 'M' },
-  { id: 'm-3', en: 'many', ja: 'たくさんの', category: 'M' },
-  { id: 'm-4', en: 'map', ja: '地図', category: 'M' },
-  { id: 'm-5', en: 'math', ja: '数学', category: 'M' },
-  { id: 'm-6', en: 'me', ja: '私を', category: 'M' },
-  { id: 'm-7', en: 'meet', ja: '会う', category: 'M' },
-  { id: 'm-8', en: 'milk', ja: '牛乳', category: 'M' },
-  { id: 'm-9', en: 'money', ja: 'お金', category: 'M' },
-  { id: 'm-10', en: 'monkey', ja: 'サル', category: 'M' },
-  { id: 'm-11', en: 'month', ja: '月', category: 'M' },
-  { id: 'm-12', en: 'morning', ja: '朝', category: 'M' },
-  { id: 'm-13', en: 'mother', ja: '母', category: 'M' },
-  { id: 'm-14', en: 'mountain', ja: '山', category: 'M' },
-  { id: 'm-15', en: 'mouth', ja: '口', category: 'M' },
-  { id: 'm-16', en: 'movie', ja: '映画', category: 'M' },
-  { id: 'm-17', en: 'music', ja: '音楽', category: 'M' },
-  { id: 'm-18', en: 'my', ja: '私の', category: 'M' },
-  // N
-  { id: 'n-1', en: 'name', ja: '名前', category: 'N' },
-  { id: 'n-2', en: 'near', ja: '近くに', category: 'N' },
-  { id: 'n-3', en: 'need', ja: '必要とする', category: 'N' },
-  { id: 'n-4', en: 'never', ja: '決して～ない', category: 'N' },
-  { id: 'n-5', en: 'new', ja: '新しい', category: 'N' },
-  { id: 'n-6', en: 'next', ja: '次の', category: 'N' },
-  { id: 'n-7', en: 'nice', ja: 'すてきな', category: 'N' },
-  { id: 'n-8', en: 'night', ja: '夜', category: 'N' },
-  { id: 'n-9', en: 'nine', ja: '9', category: 'N' },
-  { id: 'n-10', en: 'no', ja: 'いいえ', category: 'N' },
-  { id: 'n-11', en: 'noon', ja: '正午', category: 'N' },
-  { id: 'n-12', en: 'not', ja: '～でない', category: 'N' },
-  { id: 'n-13', en: 'notebook', ja: 'ノート', category: 'N' },
-  { id: 'n-14', en: 'now', ja: '今', category: 'N' },
-  { id: 'n-15', en: 'number', ja: '数', category: 'N' },
-  // O
-  { id: 'o-1', en: 'ocean', ja: '海', category: 'O' },
-  { id: 'o-2', en: 'October', ja: '10月', category: 'O' },
-  { id: 'o-3', en: 'of', ja: '～の', category: 'O' },
-  { id: 'o-4', en: 'often', ja: 'しばしば', category: 'O' },
-  { id: 'o-5', en: 'old', ja: '古い', category: 'O' },
-  { id: 'o-6', en: 'on', ja: '～の上に', category: 'O' },
-  { id: 'o-7', en: 'one', ja: '1', category: 'O' },
-  { id: 'o-8', en: 'only', ja: '～だけ', category: 'O' },
-  { id: 'o-9', en: 'open', ja: '開ける', category: 'O' },
-  { id: 'o-10', en: 'orange', ja: 'オレンジ', category: 'O' },
-  { id: 'o-11', en: 'other', ja: '他の', category: 'O' },
-  { id: 'o-12', en: 'our', ja: '私たちの', category: 'O' },
-  { id: 'o-13', en: 'out', ja: '外へ', category: 'O' },
-  { id: 'o-14', en: 'over', ja: '～を越えて', category: 'O' },
-  // P
-  { id: 'p-1', en: 'park', ja: '公園', category: 'P' },
-  { id: 'p-2', en: 'party', ja: 'パーティー', category: 'P' },
-  { id: 'p-3', en: 'pen', ja: 'ペン', category: 'P' },
-  { id: 'p-4', en: 'pencil', ja: '鉛筆', category: 'P' },
-  { id: 'p-5', en: 'people', ja: '人々', category: 'P' },
-  { id: 'p-6', en: 'piano', ja: 'ピアノ', category: 'P' },
-  { id: 'p-7', en: 'picture', ja: '写真、絵', category: 'P' },
-  { id: 'p-8', en: 'pilot', ja: 'パイロット', category: 'P' },
-  { id: 'p-9', en: 'place', ja: '場所', category: 'P' },
-  { id: 'p-10', en: 'play', ja: '遊ぶ、する', category: 'P' },
-  { id: 'p-11', en: 'player', ja: '選手', category: 'P' },
-  { id: 'p-12', en: 'please', ja: 'お願いします', category: 'P' },
-  { id: 'p-13', en: 'pool', ja: 'プール', category: 'P' },
-  { id: 'p-14', en: 'popular', ja: '人気のある', category: 'P' },
-  { id: 'p-15', en: 'practice', ja: '練習する', category: 'P' },
-  { id: 'p-16', en: 'present', ja: 'プレゼント', category: 'P' },
-  { id: 'p-17', en: 'pretty', ja: 'かわいい', category: 'P' },
-  { id: 'p-18', en: 'put', ja: '置く', category: 'P' },
-  // Q-R
-  { id: 'q-1', en: 'question', ja: '質問', category: 'Q' },
-  { id: 'r-1', en: 'rain', ja: '雨', category: 'R' },
-  { id: 'r-2', en: 'read', ja: '読む', category: 'R' },
-  { id: 'r-3', en: 'ready', ja: '準備ができて', category: 'R' },
-  { id: 'r-4', en: 'red', ja: '赤い', category: 'R' },
-  { id: 'r-5', en: 'rice', ja: '米', category: 'R' },
-  { id: 'r-6', en: 'rich', ja: '金持ちの', category: 'R' },
-  { id: 'r-7', en: 'ride', ja: '乗る', category: 'R' },
-  { id: 'r-8', en: 'right', ja: '右、正しい', category: 'R' },
-  { id: 'r-9', en: 'river', ja: '川', category: 'R' },
-  { id: 'r-10', en: 'room', ja: '部屋', category: 'R' },
-  { id: 'r-11', en: 'run', ja: '走る', category: 'R' },
-  // S
-  { id: 's-1', en: 'sad', ja: '悲しい', category: 'S' },
-  { id: 's-2', en: 'same', ja: '同じ', category: 'S' },
-  { id: 's-3', en: 'say', ja: '言う', category: 'S' },
-  { id: 's-4', en: 'school', ja: '学校', category: 'S' },
-  { id: 's-5', en: 'science', ja: '理科', category: 'S' },
-  { id: 's-6', en: 'sea', ja: '海', category: 'S' },
-  { id: 's-7', en: 'season', ja: '季節', category: 'S' },
-  { id: 's-8', en: 'see', ja: '見える、会う', category: 'S' },
-  { id: 's-9', en: 'seven', ja: '7', category: 'S' },
-  { id: 's-10', en: 'she', ja: '彼女は', category: 'S' },
-  { id: 's-11', en: 'ship', ja: '船', category: 'S' },
-  { id: 's-12', en: 'shop', ja: '店', category: 'S' },
-  { id: 's-13', en: 'short', ja: '短い', category: 'S' },
-  { id: 's-14', en: 'show', ja: '見せる', category: 'S' },
-  { id: 's-15', en: 'sing', ja: '歌う', category: 'S' },
-  { id: 's-16', en: 'sister', ja: '姉妹', category: 'S' },
-  { id: 's-17', en: 'sit', ja: '座る', category: 'S' },
-  { id: 's-18', en: 'six', ja: '6', category: 'S' },
-  { id: 's-19', en: 'sky', ja: '空', category: 'S' },
-  { id: 's-20', en: 'sleep', ja: '眠る', category: 'S' },
-  { id: 's-21', en: 'small', ja: '小さい', category: 'S' },
-  { id: 's-22', en: 'smile', ja: 'ほほえむ', category: 'S' },
-  { id: 's-23', en: 'snow', ja: '雪', category: 'S' },
-  { id: 's-24', en: 'so', ja: 'だから', category: 'S' },
-  { id: 's-25', en: 'soccer', ja: 'サッカー', category: 'S' },
-  { id: 's-26', en: 'some', ja: 'いくつかの', category: 'S' },
-  { id: 's-27', en: 'song', ja: '歌', category: 'S' },
-  { id: 's-28', en: 'soon', ja: 'すぐに', category: 'S' },
-  { id: 's-29', en: 'speak', ja: '話す', category: 'S' },
-  { id: 's-30', en: 'sport', ja: 'スポーツ', category: 'S' },
-  { id: 's-31', en: 'spring', ja: '春', category: 'S' },
-  { id: 's-32', en: 'stand', ja: '立つ', category: 'S' },
-  { id: 's-33', en: 'start', ja: '始める', category: 'S' },
-  { id: 's-34', en: 'station', ja: '駅', category: 'S' },
-  { id: 's-35', en: 'stay', ja: '滞在する', category: 'S' },
-  { id: 's-36', en: 'stop', ja: '止まる', category: 'S' },
-  { id: 's-37', en: 'store', ja: '店', category: 'S' },
-  { id: 's-38', en: 'story', ja: '物語', category: 'S' },
-  { id: 's-39', en: 'street', ja: '通り', category: 'S' },
-  { id: 's-40', en: 'strong', ja: '強い', category: 'S' },
-  { id: 's-41', en: 'student', ja: '生徒', category: 'S' },
-  { id: 's-42', en: 'study', ja: '勉強する', category: 'S' },
-  { id: 's-43', en: 'summer', ja: '夏', category: 'S' },
-  { id: 's-44', en: 'sun', ja: '太陽', category: 'S' },
-  { id: 's-45', en: 'sunday', ja: '日曜日', category: 'S' },
-  { id: 's-46', en: 'sure', ja: 'もちろん', category: 'S' },
-  { id: 's-47', en: 'swim', ja: '泳ぐ', category: 'S' },
-  // T
-  { id: 't-1', en: 'table', ja: 'テーブル', category: 'T' },
-  { id: 't-2', en: 'take', ja: '取る、乗る', category: 'T' },
-  { id: 't-3', en: 'talk', ja: '話す', category: 'T' },
-  { id: 't-4', en: 'tall', ja: '背が高い', category: 'T' },
-  { id: 't-5', en: 'tea', ja: 'お茶', category: 'T' },
-  { id: 't-6', en: 'teach', ja: '教える', category: 'T' },
-  { id: 't-7', en: 'teacher', ja: '先生', category: 'T' },
-  { id: 't-8', en: 'team', ja: 'チーム', category: 'T' },
-  { id: 't-9', en: 'tell', ja: '話す、教える', category: 'T' },
-  { id: 't-10', en: 'ten', ja: '10', category: 'T' },
-  { id: 't-11', en: 'tennis', ja: 'テニス', category: 'T' },
-  { id: 't-12', en: 'test', ja: 'テスト', category: 'T' },
-  { id: 't-13', en: 'than', ja: '～よりも', category: 'T' },
-  { id: 't-14', en: 'thank', ja: '感謝する', category: 'T' },
-  { id: 't-15', en: 'that', ja: 'あれ、その', category: 'T' },
-  { id: 't-16', en: 'the', ja: 'その', category: 'T' },
-  { id: 't-17', en: 'their', ja: '彼らの', category: 'T' },
-  { id: 't-18', en: 'them', ja: '彼らを', category: 'T' },
-  { id: 't-19', en: 'then', ja: 'その時', category: 'T' },
-  { id: 't-20', en: 'there', ja: 'そこに', category: 'T' },
-  { id: 't-21', en: 'these', ja: 'これら', category: 'T' },
-  { id: 't-22', en: 'they', ja: '彼らは', category: 'T' },
-  { id: 't-23', en: 'thing', ja: 'もの', category: 'T' },
-  { id: 't-24', en: 'think', ja: '思う', category: 'T' },
-  { id: 't-25', en: 'this', ja: 'これ', category: 'T' },
-  { id: 't-26', en: 'those', ja: 'あれら', category: 'T' },
-  { id: 't-27', en: 'three', ja: '3', category: 'T' },
-  { id: 't-28', en: 'time', ja: '時間', category: 'T' },
-  { id: 't-29', en: 'to', ja: '～へ', category: 'T' },
-  { id: 't-30', en: 'today', ja: '今日', category: 'T' },
-  { id: 't-31', en: 'together', ja: '一緒に', category: 'T' },
-  { id: 't-32', en: 'tomorrow', ja: '明日', category: 'T' },
-  { id: 't-33', en: 'too', ja: '～も', category: 'T' },
-  { id: 't-34', en: 'town', ja: '町', category: 'T' },
-  { id: 't-35', en: 'train', ja: '電車', category: 'T' },
-  { id: 't-36', en: 'tree', ja: '木', category: 'T' },
-  { id: 't-37', en: 'trip', ja: '旅行', category: 'T' },
-  { id: 't-38', en: 'try', ja: '試す', category: 'T' },
-  { id: 't-39', en: 'turn', ja: '曲がる', category: 'T' },
-  { id: 't-40', en: 'two', ja: '2', category: 'T' },
-  // U-V
-  { id: 'u-1', en: 'uncle', ja: 'おじ', category: 'U' },
-  { id: 'u-2', en: 'under', ja: '～の下に', category: 'U' },
-  { id: 'u-3', en: 'up', ja: '上に', category: 'U' },
-  { id: 'u-4', en: 'use', ja: '使う', category: 'U' },
-  { id: 'u-5', en: 'usually', ja: 'たいてい', category: 'U' },
-  { id: 'v-1', en: 'vacation', ja: '休暇', category: 'V' },
-  { id: 'v-2', en: 'vegetable', ja: '野菜', category: 'V' },
-  { id: 'v-3', en: 'very', ja: 'とても', category: 'V' },
-  { id: 'v-4', en: 'visit', ja: '訪れる', category: 'V' },
-  // W
-  { id: 'w-1', en: 'wait', ja: '待つ', category: 'W' },
-  { id: 'w-2', en: 'walk', ja: '歩く', category: 'W' },
-  { id: 'w-3', en: 'want', ja: '欲しい', category: 'W' },
-  { id: 'w-4', en: 'warm', ja: '暖かい', category: 'W' },
-  { id: 'w-5', en: 'wash', ja: '洗う', category: 'W' },
-  { id: 'w-6', en: 'watch', ja: '見る', category: 'W' },
-  { id: 'w-7', en: 'water', ja: '水', category: 'W' },
-  { id: 'w-8', en: 'way', ja: '道', category: 'W' },
-  { id: 'w-9', en: 'we', ja: '私たちは', category: 'W' },
-  { id: 'w-10', en: 'wear', ja: '着ている', category: 'W' },
-  { id: 'w-11', en: 'weather', ja: '天気', category: 'W' },
-  { id: 'w-12', en: 'week', ja: '週', category: 'W' },
-  { id: 'w-13', en: 'well', ja: '上手に', category: 'W' },
-  { id: 'w-14', en: 'what', ja: '何', category: 'W' },
-  { id: 'w-15', en: 'when', ja: 'いつ', category: 'W' },
-  { id: 'w-16', en: 'where', ja: 'どこ', category: 'W' },
-  { id: 'w-17', en: 'which', ja: 'どちら', category: 'W' },
-  { id: 'w-18', en: 'white', ja: '白い', category: 'W' },
-  { id: 'w-19', en: 'who', ja: 'だれ', category: 'W' },
-  { id: 'w-20', en: 'why', ja: 'なぜ', category: 'W' },
-  { id: 'w-21', en: 'will', ja: '～でしょう', category: 'W' },
-  { id: 'w-22', en: 'win', ja: '勝つ', category: 'W' },
-  { id: 'w-23', en: 'winter', ja: '冬', category: 'W' },
-  { id: 'w-24', en: 'with', ja: '～と一緒に', category: 'W' },
-  { id: 'w-25', en: 'woman', ja: '女性', category: 'W' },
-  { id: 'w-26', en: 'wonderful', ja: '素晴らしい', category: 'W' },
-  { id: 'w-27', en: 'word', ja: '単語', category: 'W' },
-  { id: 'w-28', en: 'work', ja: '働く', category: 'W' },
-  { id: 'w-29', en: 'world', ja: '世界', category: 'W' },
-  { id: 'w-30', en: 'write', ja: '書く', category: 'W' },
-  // Y-Z
-  { id: 'y-1', en: 'year', ja: '年', category: 'Y' },
-  { id: 'y-2', en: 'yellow', ja: '黄色い', category: 'Y' },
-  { id: 'y-3', en: 'yes', ja: 'はい', category: 'Y' },
-  { id: 'y-4', en: 'yesterday', ja: '昨日', category: 'Y' },
-  { id: 'y-5', en: 'you', ja: 'あなたは', category: 'Y' },
-  { id: 'y-6', en: 'young', ja: '若い', category: 'Y' },
-  { id: 'y-7', en: 'your', ja: 'あなたの', category: 'Y' },
-  { id: 'z-1', en: 'zoo', ja: '動物園', category: 'Z' },
-];
+        /* スクロールバー非表示（見た目向上） */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-// --- ユーティリティ ---
-const shuffleArray = (array) => {
-  const newArray = [...array];
-  for (let i = newArray.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-  }
-  return newArray;
-};
+        /* PC表示対策: コンテンツエリアの確保 */
+        main { min-height: 80vh; }
+    </style>
+</head>
+<body class="min-h-screen">
 
-const speak = (text) => {
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    utterance.rate = 0.9;
-    window.speechSynthesis.speak(utterance);
-  }
-};
-
-// --- コンポーネント ---
-
-const App = () => {
-  const [view, setView] = useState('home'); // 'home', 'learn', 'quiz', 'results'
-  const [currentCategory, setCurrentCategory] = useState('All');
-  const [learnedWords, setLearnedWords] = useState([]);
-  const [currentWordIndex, setCurrentWordIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [quizQuestions, setQuizQuestions] = useState([]);
-  const [quizIndex, setQuizIndex] = useState(0);
-  const [quizScore, setQuizScore] = useState(0);
-  const [showQuizResult, setShowQuizResult] = useState(false);
-
-  // ローカルストレージから進捗を読み込み
-  useEffect(() => {
-    const saved = localStorage.getItem('vocab_learned');
-    if (saved) {
-      setLearnedWords(JSON.parse(saved));
-    }
-  }, []);
-
-  // 進捗を保存
-  useEffect(() => {
-    localStorage.setItem('vocab_learned', JSON.stringify(learnedWords));
-  }, [learnedWords]);
-
-  const categories = useMemo(() => {
-    const cats = ['All', ...new Set(VOCABULARY_DATA.map(w => w.category))];
-    return cats.sort();
-  }, []);
-
-  const filteredWords = useMemo(() => {
-    if (currentCategory === 'All') return VOCABULARY_DATA;
-    return VOCABULARY_DATA.filter(w => w.category === currentCategory);
-  }, [currentCategory]);
-
-  const progressPercentage = Math.round((learnedWords.length / VOCABULARY_DATA.length) * 100);
-
-  // --- アクション ---
-
-  const startLearning = (category) => {
-    setCurrentCategory(category);
-    setCurrentWordIndex(0);
-    setIsFlipped(false);
-    setView('learn');
-  };
-
-  const startQuiz = () => {
-    // クイズ生成ロジック: ランダムに10問
-    const shuffled = shuffleArray(VOCABULARY_DATA);
-    const questions = shuffled.slice(0, 10).map(correct => {
-      const distractors = shuffleArray(VOCABULARY_DATA.filter(w => w.id !== correct.id)).slice(0, 3);
-      const options = shuffleArray([correct, ...distractors]);
-      return { correct, options };
-    });
-    setQuizQuestions(questions);
-    setQuizIndex(0);
-    setQuizScore(0);
-    setShowQuizResult(false);
-    setView('quiz');
-  };
-
-  const markAsLearned = (id) => {
-    if (!learnedWords.includes(id)) {
-      setLearnedWords(prev => [...prev, id]);
-    }
-    nextWord();
-  };
-
-  const nextWord = () => {
-    setIsFlipped(false);
-    if (currentWordIndex < filteredWords.length - 1) {
-      setCurrentWordIndex(prev => prev + 1);
-    } else {
-      // 一周完了
-      alert("このカテゴリの単語を一通り確認しました！");
-      setView('home');
-    }
-  };
-
-  const prevWord = () => {
-    setIsFlipped(false);
-    if (currentWordIndex > 0) {
-      setCurrentWordIndex(prev => prev - 1);
-    }
-  };
-
-  const handleQuizAnswer = (selectedId) => {
-    const currentQ = quizQuestions[quizIndex];
-    if (selectedId === currentQ.correct.id) {
-      setQuizScore(prev => prev + 1);
-      speak("Correct!");
-    } else {
-      speak("Nice try");
-    }
-
-    if (quizIndex < quizQuestions.length - 1) {
-      setTimeout(() => setQuizIndex(prev => prev + 1), 600);
-    } else {
-      setTimeout(() => setShowQuizResult(true), 600);
-    }
-  };
-
-  // --- ビュー ---
-
-  const HomeView = () => (
-    <div className="flex flex-col space-y-6 pb-20">
-      <header className="bg-indigo-600 text-white p-6 rounded-b-3xl shadow-lg">
-        <h1 className="text-2xl font-bold mb-2">中1英単語マスター</h1>
-        <div className="flex items-center justify-between">
-          <span className="text-indigo-100">学習進捗</span>
-          <span className="font-bold text-2xl">{progressPercentage}%</span>
+    <!-- ヘッダー -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 py-3 shadow-sm">
+        <div class="max-w-2xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+                    <i class="fa-solid fa-book"></i>
+                </div>
+                <h1 class="text-lg font-black tracking-tight text-slate-800">VOCAB MASTER</h1>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-full border border-green-100">
+                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                <span class="text-[10px] font-bold text-green-700 uppercase">Native Voice</span>
+            </div>
         </div>
-        <div className="w-full bg-indigo-800 rounded-full h-2.5 mt-2">
-          <div className="bg-green-400 h-2.5 rounded-full transition-all duration-500" style={{ width: `${progressPercentage}%` }}></div>
-        </div>
-        <p className="text-xs text-right mt-1 text-indigo-200">{learnedWords.length} / {VOCABULARY_DATA.length} 語</p>
-      </header>
+    </header>
 
-      <div className="px-4 space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <button onClick={() => startLearning('All')} className="bg-white p-6 rounded-xl shadow-md flex flex-col items-center justify-center space-y-2 hover:bg-gray-50 active:scale-95 transition">
-            <BookOpen size={32} className="text-indigo-500" />
-            <span className="font-bold text-gray-700">全単語学習</span>
-          </button>
-          <button onClick={startQuiz} className="bg-white p-6 rounded-xl shadow-md flex flex-col items-center justify-center space-y-2 hover:bg-gray-50 active:scale-95 transition">
-            <Trophy size={32} className="text-amber-500" />
-            <span className="font-bold text-gray-700">実力テスト</span>
-          </button>
-        </div>
+    <main class="max-w-2xl mx-auto p-4">
 
-        <h2 className="text-lg font-bold text-gray-700 mt-4">カテゴリ別学習</h2>
-        <div className="grid grid-cols-4 gap-2">
-          {categories.filter(c => c !== 'All').map(cat => (
-            <button
-              key={cat}
-              onClick={() => startLearning(cat)}
-              className="bg-white py-3 rounded-lg shadow-sm border border-gray-100 font-semibold text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 active:bg-indigo-100"
-            >
-              {cat}
+        <!-- ダッシュボード画面 -->
+        <section id="view-dashboard" class="space-y-6">
+            <!-- 統計カード -->
+            <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-6 text-white shadow-xl">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <p class="text-blue-100 text-xs font-bold uppercase tracking-widest mb-1">Total Words</p>
+                        <h2 class="text-5xl font-black"><span id="dash-total-count">0</span></h2>
+                    </div>
+                    <div class="bg-white/20 p-3 rounded-2xl backdrop-blur-sm">
+                        <i class="fa-solid fa-database text-2xl"></i>
+                    </div>
+                </div>
+                <p class="text-sm text-blue-100 font-bold opacity-90">全画像データを収録済み</p>
+                
+                <div class="mt-6 grid grid-cols-2 gap-3">
+                    <button onclick="app.navigate('dictionary')" class="bg-white/10 hover:bg-white/20 py-3 px-4 rounded-xl text-sm font-bold transition-all border border-white/10 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-list"></i> 一覧を見る
+                    </button>
+                    <button onclick="app.navigate('flashcards')" class="bg-white text-blue-600 py-3 px-4 rounded-xl text-sm font-black shadow-lg hover:bg-blue-50 transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play"></i> 学習開始
+                    </button>
+                </div>
+            </div>
+
+            <!-- 今日の単語 -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 relative overflow-hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Pick Up</h3>
+                    <button onclick="app.refreshWOTD()" class="text-slate-300 hover:text-slate-500 transition-colors"><i class="fa-solid fa-rotate"></i></button>
+                </div>
+                <div class="flex flex-col items-center text-center py-2">
+                    <div id="wotd-word" class="text-4xl font-black text-slate-800 mb-2">loading...</div>
+                    <div id="wotd-meaning" class="text-slate-500 font-bold mb-6 text-lg">...</div>
+                    <button onclick="app.speakWord(document.getElementById('wotd-word').innerText)" class="w-full py-3 bg-slate-900 text-white rounded-xl text-sm font-bold active:scale-95 transition-all shadow-md flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-volume-high"></i> 発音を聞く
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 単語リスト画面 -->
+        <section id="view-dictionary" class="hidden space-y-4">
+            <div class="sticky top-16 z-40 bg-slate-50/95 backdrop-blur-sm pt-2 pb-2 -mx-4 px-4 border-b border-slate-100">
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="単語を検索 (例: apple, 赤)..." class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-base font-bold transition-all">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-4 text-slate-400"></i>
+                </div>
+                <!-- カテゴリフィルター -->
+                <div class="flex gap-2 mt-3 overflow-x-auto pb-2 no-scrollbar" id="category-filter-container">
+                    <button onclick="app.filterCategory('all', this)" class="cat-btn active whitespace-nowrap px-4 py-1.5 bg-slate-800 text-white rounded-full text-xs font-bold shadow-sm transition-all">すべて</button>
+                    <button onclick="app.filterCategory('noun', this)" class="cat-btn whitespace-nowrap px-4 py-1.5 bg-white text-slate-600 border border-slate-200 rounded-full text-xs font-bold transition-all">名詞</button>
+                    <button onclick="app.filterCategory('verb', this)" class="cat-btn whitespace-nowrap px-4 py-1.5 bg-white text-slate-600 border border-slate-200 rounded-full text-xs font-bold transition-all">動詞</button>
+                    <button onclick="app.filterCategory('adj', this)" class="cat-btn whitespace-nowrap px-4 py-1.5 bg-white text-slate-600 border border-slate-200 rounded-full text-xs font-bold transition-all">形容詞</button>
+                    <button onclick="app.filterCategory('number', this)" class="cat-btn whitespace-nowrap px-4 py-1.5 bg-white text-slate-600 border border-slate-200 rounded-full text-xs font-bold transition-all">数字</button>
+                </div>
+            </div>
+            <div id="dictionaryBody" class="space-y-3 pb-20">
+                <!-- 単語リストがここに生成されます -->
+            </div>
+        </section>
+
+        <!-- カード学習画面 -->
+        <section id="view-flashcards" class="hidden flex flex-col items-center gap-6 pt-2">
+            <div class="w-full flex justify-between items-center px-2">
+                <div class="text-xs font-black text-slate-400 tracking-widest uppercase">
+                    Card <span id="card-counter" class="text-blue-600 text-lg">0</span> / <span id="card-total">0</span>
+                </div>
+                <button onclick="app.shuffleCards()" class="text-slate-400 hover:text-blue-600 transition-colors p-2">
+                    <i class="fa-solid fa-shuffle text-lg"></i>
+                </button>
+            </div>
+
+            <div class="relative w-full max-w-[340px] h-[420px] perspective-1000 cursor-pointer group" onclick="app.flipCard()">
+                <div id="flashcard-inner" class="relative w-full h-full text-center transition-all duration-500 transform-style-3d rounded-[2rem]">
+                    
+                    <!-- 表面 -->
+                    <div class="absolute w-full h-full flex flex-col items-center justify-center bg-white rounded-[2rem] backface-hidden border border-slate-200 shadow-xl p-6 group-hover:shadow-2xl transition-shadow">
+                        <span id="card-cat-badge" class="absolute top-6 right-6 px-3 py-1 bg-slate-100 text-slate-500 text-[10px] font-black rounded-full uppercase">Noun</span>
+                        <h3 id="card-front" class="text-5xl font-black text-slate-800 break-words tracking-tight">word</h3>
+                        <p class="absolute bottom-8 text-[10px] text-slate-400 font-bold uppercase tracking-widest animate-pulse">Tap to Flip</p>
+                    </div>
+
+                    <!-- 裏面 -->
+                    <div class="absolute w-full h-full flex flex-col items-center justify-center bg-blue-600 text-white rounded-[2rem] backface-hidden rotate-y-180 shadow-xl p-6">
+                        <h3 id="card-back" class="text-3xl font-bold mb-8">意味</h3>
+                        <button onclick="event.stopPropagation(); app.speakWord(document.getElementById('card-front').innerText)" class="w-3/4 bg-white/20 hover:bg-white/30 py-4 rounded-xl text-xs font-black tracking-widest transition-all backdrop-blur-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-volume-high"></i> LISTEN
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full flex gap-3 max-w-[400px] mt-auto">
+                <button onclick="app.prevCard()" class="flex-1 bg-white border border-slate-200 text-slate-500 font-black rounded-xl py-4 active:scale-95 transition-all hover:bg-slate-50">
+                    <i class="fa-solid fa-arrow-left"></i> PREV
+                </button>
+                <button onclick="app.nextCard()" class="flex-[2] bg-slate-800 text-white font-black rounded-xl py-4 shadow-lg active:scale-95 transition-all hover:bg-slate-700">
+                    NEXT <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ボトムナビゲーション -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 px-6 py-1 pb-safe z-50 shadow-lg-up">
+        <div class="max-w-2xl mx-auto flex justify-around items-center h-16">
+            <button onclick="app.navigate('dashboard')" class="nav-item active flex flex-col items-center gap-1 w-16 transition-all" id="nav-dashboard">
+                <i class="fa-solid fa-house text-xl mb-0.5"></i>
+                <span class="text-[9px] font-bold">Home</span>
             </button>
-          ))}
+            <button onclick="app.navigate('dictionary')" class="nav-item flex flex-col items-center gap-1 w-16 transition-all" id="nav-dictionary">
+                <i class="fa-solid fa-book-open text-xl mb-0.5"></i>
+                <span class="text-[9px] font-bold">List</span>
+            </button>
+            <button onclick="app.navigate('flashcards')" class="nav-item flex flex-col items-center gap-1 w-16 transition-all" id="nav-flashcards">
+                <i class="fa-solid fa-clone text-xl mb-0.5"></i>
+                <span class="text-[9px] font-bold">Cards</span>
+            </button>
         </div>
-      </div>
-    </div>
-  );
+    </nav>
 
-  const LearnView = () => {
-    const word = filteredWords[currentWordIndex];
-    const isLearned = learnedWords.includes(word.id);
+    <script>
+        const app = {
+            // 全画像から抽出した完全版データ (約200語)
+            data: [
+                // --- A-Z Nouns (Alphabet) ---
+                { w: "ant", m: "アリ", c: "noun" }, { w: "apple", m: "リンゴ", c: "noun" }, { w: "bag", m: "かばん", c: "noun" }, { w: "ball", m: "ボール", c: "noun" },
+                { w: "bear", m: "クマ", c: "noun" }, { w: "bed", m: "ベッド", c: "noun" }, { w: "bike", m: "自転車", c: "noun" }, { w: "bird", m: "鳥", c: "noun" },
+                { w: "book", m: "本", c: "noun" }, { w: "box", m: "箱", c: "noun" }, { w: "boy", m: "男の子", c: "noun" }, { w: "bus", m: "バス", c: "noun" },
+                { w: "cake", m: "ケーキ", c: "noun" }, { w: "camera", m: "カメラ", c: "noun" }, { w: "car", m: "車", c: "noun" }, { w: "cat", m: "ネコ", c: "noun" },
+                { w: "chair", m: "いす", c: "noun" }, { w: "cup", m: "カップ", c: "noun" }, { w: "desk", m: "机", c: "noun" }, { w: "dog", m: "犬", c: "noun" },
+                { w: "door", m: "ドア", c: "noun" }, { w: "egg", m: "卵", c: "noun" }, { w: "eraser", m: "消しゴム", c: "noun" }, { w: "fish", m: "魚", c: "noun" },
+                { w: "flower", m: "花", c: "noun" }, { w: "friend", m: "友達", c: "noun" }, { w: "girl", m: "女の子", c: "noun" }, { w: "glass", m: "コップ", c: "noun" },
+                { w: "guitar", m: "ギター", c: "noun" }, { w: "hat", m: "帽子", c: "noun" }, { w: "house", m: "家", c: "noun" }, { w: "ice cream", m: "アイス", c: "noun" },
+                { w: "jam", m: "ジャム", c: "noun" }, { w: "key", m: "かぎ", c: "noun" }, { w: "kitchen", m: "台所", c: "noun" }, { w: "lion", m: "ライオン", c: "noun" },
+                { w: "map", m: "地図", c: "noun" }, { w: "milk", m: "牛乳", c: "noun" }, { w: "monkey", m: "サル", c: "noun" }, { w: "notebook", m: "ノート", c: "noun" },
+                { w: "orange", m: "オレンジ", c: "noun" }, { w: "park", m: "公園", c: "noun" }, { w: "pen", m: "ペン", c: "noun" }, { w: "pencil", m: "鉛筆", c: "noun" },
+                { w: "piano", m: "ピアノ", c: "noun" }, { w: "picture", m: "写真", c: "noun" }, { w: "queen", m: "女王", c: "noun" }, { w: "rabbit", m: "ウサギ", c: "noun" },
+                { w: "racket", m: "ラケット", c: "noun" }, { w: "school", m: "学校", c: "noun" }, { w: "star", m: "星", c: "noun" }, { w: "student", m: "生徒", c: "noun" },
+                { w: "teacher", m: "先生", c: "noun" }, { w: "tree", m: "木", c: "noun" }, { w: "umbrella", m: "かさ", c: "noun" }, { w: "vase", m: "かびん", c: "noun" },
+                { w: "watch", m: "腕時計", c: "noun" }, { w: "window", m: "窓", c: "noun" }, { w: "yo-yo", m: "ヨーヨー", c: "noun" }, { w: "zebra", m: "シマウマ", c: "noun" },
 
-    return (
-      <div className="flex flex-col h-full px-4 pt-6 pb-20">
-        <div className="flex justify-between items-center mb-6">
-          <button onClick={() => setView('home')} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200">
-            <Home size={20} className="text-gray-600" />
-          </button>
-          <span className="font-bold text-gray-500">{currentWordIndex + 1} / {filteredWords.length}</span>
-          <div className="w-10"></div> {/* Spacer */}
-        </div>
+                // --- Numbers (1-20, 30-100) ---
+                { w: "one", m: "1", c: "number" }, { w: "two", m: "2", c: "number" }, { w: "three", m: "3", c: "number" }, { w: "four", m: "4", c: "number" },
+                { w: "five", m: "5", c: "number" }, { w: "six", m: "6", c: "number" }, { w: "seven", m: "7", c: "number" }, { w: "eight", m: "8", c: "number" },
+                { w: "nine", m: "9", c: "number" }, { w: "ten", m: "10", c: "number" }, { w: "eleven", m: "11", c: "number" }, { w: "twelve", m: "12", c: "number" },
+                { w: "thirteen", m: "13", c: "number" }, { w: "fourteen", m: "14", c: "number" }, { w: "fifteen", m: "15", c: "number" }, { w: "sixteen", m: "16", c: "number" },
+                { w: "seventeen", m: "17", c: "number" }, { w: "eighteen", m: "18", c: "number" }, { w: "nineteen", m: "19", c: "number" }, { w: "twenty", m: "20", c: "number" },
+                { w: "thirty", m: "30", c: "number" }, { w: "forty", m: "40", c: "number" }, { w: "fifty", m: "50", c: "number" }, { w: "sixty", m: "60", c: "number" },
+                { w: "seventy", m: "70", c: "number" }, { w: "eighty", m: "80", c: "number" }, { w: "ninety", m: "90", c: "number" }, { w: "hundred", m: "100", c: "number" },
 
-        <div className="flex-1 flex flex-col justify-center">
-          <div
-            className={`relative w-full aspect-[4/5] bg-white rounded-2xl shadow-xl border-2 transition-all duration-300 transform perspective-1000 ${isLearned ? 'border-green-400' : 'border-indigo-100'}`}
-            onClick={() => setIsFlipped(!isFlipped)}
-          >
-            <div className="absolute top-4 right-4">
-              {isLearned && <Check className="text-green-500" size={24} />}
-            </div>
+                // --- Colors ---
+                { w: "red", m: "赤", c: "adj" }, { w: "blue", m: "青", c: "adj" }, { w: "green", m: "緑", c: "adj" }, { w: "yellow", m: "黄", c: "adj" },
+                { w: "black", m: "黒", c: "adj" }, { w: "white", m: "白", c: "adj" }, { w: "pink", m: "ピンク", c: "adj" }, { w: "orange", m: "オレンジ", c: "adj" },
+                { w: "brown", m: "茶", c: "adj" }, { w: "purple", m: "紫", c: "adj" },
 
-            <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-              {!isFlipped ? (
-                <>
-                  <h2 className="text-5xl font-bold text-gray-800 mb-4">{word.en}</h2>
-                  <p className="text-sm text-gray-400">タップして意味を表示</p>
-                </>
-              ) : (
-                <>
-                  <h2 className="text-3xl font-bold text-gray-800 mb-2">{word.en}</h2>
-                  <div className="w-16 h-1 bg-indigo-100 rounded-full mb-6"></div>
-                  <h3 className="text-4xl font-bold text-indigo-600 mb-4">{word.ja}</h3>
-                </>
-              )}
+                // --- Family ---
+                { w: "father", m: "父", c: "noun" }, { w: "mother", m: "母", c: "noun" }, { w: "brother", m: "兄・弟", c: "noun" }, { w: "sister", m: "姉・妹", c: "noun" },
+                { w: "grandfather", m: "祖父", c: "noun" }, { w: "grandmother", m: "祖母", c: "noun" }, { w: "uncle", m: "おじ", c: "noun" }, { w: "aunt", m: "おば", c: "noun" },
+                { w: "cousin", m: "いとこ", c: "noun" }, { w: "family", m: "家族", c: "noun" },
 
-              <button
-                onClick={(e) => { e.stopPropagation(); speak(word.en); }}
-                className="mt-8 p-3 bg-indigo-50 rounded-full text-indigo-600 hover:bg-indigo-100 active:bg-indigo-200 transition"
-              >
-                <Volume2 size={24} />
-              </button>
-            </div>
-          </div>
-        </div>
+                // --- Verbs (Actions) ---
+                { w: "play", m: "遊ぶ・する", c: "verb" }, { w: "run", m: "走る", c: "verb" }, { w: "swim", m: "泳ぐ", c: "verb" }, { w: "walk", m: "歩く", c: "verb" },
+                { w: "jump", m: "跳ぶ", c: "verb" }, { w: "sing", m: "歌う", c: "verb" }, { w: "dance", m: "踊る", c: "verb" }, { w: "cook", m: "料理する", c: "verb" },
+                { w: "read", m: "読む", c: "verb" }, { w: "write", m: "書く", c: "verb" }, { w: "speak", m: "話す", c: "verb" }, { w: "listen", m: "聞く", c: "verb" },
+                { w: "eat", m: "食べる", c: "verb" }, { w: "drink", m: "飲む", c: "verb" }, { w: "study", m: "勉強する", c: "verb" }, { w: "wash", m: "洗う", c: "verb" },
+                { w: "watch", m: "見る", c: "verb" }, { w: "sleep", m: "眠る", c: "verb" }, { w: "go", m: "行く", c: "verb" }, { w: "come", m: "来る", c: "verb" },
+                { w: "help", m: "助ける", c: "verb" }, { w: "use", m: "使う", c: "verb" }, { w: "have", m: "持っている", c: "verb" }, { w: "like", m: "好きだ", c: "verb" },
+                { w: "want", m: "欲しい", c: "verb" },
 
-        <div className="mt-8 grid grid-cols-2 gap-4">
-          <button
-            onClick={prevWord}
-            disabled={currentWordIndex === 0}
-            className="py-4 rounded-xl bg-gray-200 text-gray-600 font-bold disabled:opacity-30"
-          >
-            戻る
-          </button>
-          <button
-            onClick={() => markAsLearned(word.id)}
-            className="py-4 rounded-xl bg-indigo-600 text-white font-bold shadow-lg hover:bg-indigo-700 active:scale-95 transition flex items-center justify-center gap-2"
-          >
-             覚えた！ <ArrowRight size={20} />
-          </button>
-        </div>
-        <div className="mt-4 text-center">
-             <button onClick={nextWord} className="text-gray-400 text-sm underline">覚えたことにして次へ</button>
-        </div>
-      </div>
-    );
-  };
+                // --- School Subjects ---
+                { w: "English", m: "英語", c: "noun" }, { w: "Japanese", m: "国語", c: "noun" }, { w: "math", m: "数学", c: "noun" }, { w: "science", m: "理科", c: "noun" },
+                { w: "social studies", m: "社会", c: "noun" }, { w: "music", m: "音楽", c: "noun" }, { w: "art", m: "美術", c: "noun" }, { w: "PE", m: "体育", c: "noun" },
 
-  const QuizView = () => {
-    if (showQuizResult) {
-      return (
-        <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-          <Trophy size={64} className="text-yellow-400 mb-6" />
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">結果発表</h2>
-          <p className="text-xl text-gray-600 mb-8">
-            <span className="text-5xl font-bold text-indigo-600">{quizScore}</span> / {quizQuestions.length} 問正解
-          </p>
-          <button
-            onClick={() => setView('home')}
-            className="w-full max-w-xs py-4 bg-indigo-600 text-white rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition"
-          >
-            ホームに戻る
-          </button>
-        </div>
-      );
-    }
+                // --- Time & Calendar ---
+                { w: "Sunday", m: "日曜日", c: "noun" }, { w: "Monday", m: "月曜日", c: "noun" }, { w: "Tuesday", m: "火曜日", c: "noun" }, { w: "Wednesday", m: "水曜日", c: "noun" },
+                { w: "Thursday", m: "木曜日", c: "noun" }, { w: "Friday", m: "金曜日", c: "noun" }, { w: "Saturday", m: "土曜日", c: "noun" },
+                { w: "January", m: "1月", c: "noun" }, { w: "February", m: "2月", c: "noun" }, { w: "March", m: "3月", c: "noun" }, { w: "April", m: "4月", c: "noun" },
+                { w: "May", m: "5月", c: "noun" }, { w: "June", m: "6月", c: "noun" }, { w: "July", m: "7月", c: "noun" }, { w: "August", m: "8月", c: "noun" },
+                { w: "September", m: "9月", c: "noun" }, { w: "October", m: "10月", c: "noun" }, { w: "November", m: "11月", c: "noun" }, { w: "December", m: "12月", c: "noun" },
+                { w: "today", m: "今日", c: "noun" }, { w: "yesterday", m: "昨日", c: "noun" }, { w: "tomorrow", m: "明日", c: "noun" }, 
+                { w: "morning", m: "朝", c: "noun" }, { w: "afternoon", m: "午後", c: "noun" }, { w: "evening", m: "夕方", c: "noun" }, { w: "night", m: "夜", c: "noun" },
 
-    const currentQ = quizQuestions[quizIndex];
+                // --- Body Parts ---
+                { w: "head", m: "頭", c: "noun" }, { w: "hair", m: "髪", c: "noun" }, { w: "face", m: "顔", c: "noun" }, { w: "eye", m: "目", c: "noun" },
+                { w: "ear", m: "耳", c: "noun" }, { w: "nose", m: "鼻", c: "noun" }, { w: "mouth", m: "口", c: "noun" }, { w: "shoulder", m: "肩", c: "noun" },
+                { w: "arm", m: "腕", c: "noun" }, { w: "hand", m: "手", c: "noun" }, { w: "finger", m: "指", c: "noun" }, { w: "leg", m: "脚", c: "noun" }, { w: "foot", m: "足", c: "noun" },
 
-    return (
-      <div className="flex flex-col h-full px-4 pt-6 pb-10">
-        <div className="flex justify-between items-center mb-8">
-           <span className="text-sm font-bold text-gray-400">Question {quizIndex + 1} / 10</span>
-           <button onClick={() => setView('home')}><X size={24} className="text-gray-400" /></button>
-        </div>
+                // --- Adjectives ---
+                { w: "big", m: "大きい", c: "adj" }, { w: "small", m: "小さい", c: "adj" }, { w: "long", m: "長い", c: "adj" }, { w: "short", m: "短い", c: "adj" },
+                { w: "new", m: "新しい", c: "adj" }, { w: "old", m: "古い", c: "adj" }, { w: "hot", m: "暑い", c: "adj" }, { w: "cold", m: "寒い", c: "adj" },
+                { w: "good", m: "良い", c: "adj" }, { w: "bad", m: "悪い", c: "adj" }, { w: "happy", m: "幸せな", c: "adj" }, { w: "sad", m: "悲しい", c: "adj" },
+                { w: "busy", m: "忙しい", c: "adj" }, { w: "beautiful", m: "美しい", c: "adj" }, { w: "cute", m: "かわいい", c: "adj" }, { w: "nice", m: "すてきな", c: "adj" },
+                { w: "hungry", m: "空腹の", c: "adj" }, { w: "fine", m: "元気な", c: "adj" },
 
-        <div className="flex-1 flex flex-col items-center">
-          <h2 className="text-4xl font-bold text-gray-800 mb-8">{currentQ.correct.en}</h2>
-          <button onClick={() => speak(currentQ.correct.en)} className="mb-8 p-3 bg-indigo-50 rounded-full text-indigo-600">
-             <Volume2 size={24} />
-          </button>
+                // --- Others ---
+                { w: "I", m: "私は", c: "other" }, { w: "my", m: "私の", c: "other" }, { w: "you", m: "あなたは", c: "other" }, { w: "he", m: "彼は", c: "other" },
+                { w: "she", m: "彼女は", c: "other" }, { w: "we", m: "私たちは", c: "other" }, { w: "they", m: "彼らは", c: "other" },
+                { w: "this", m: "これ", c: "other" }, { w: "that", m: "あれ", c: "other" },
+                { w: "hello", m: "こんにちは", c: "other" }, { w: "goodbye", m: "さようなら", c: "other" }, { w: "thank you", m: "ありがとう", c: "other" },
+                { w: "sorry", m: "ごめんなさい", c: "other" }, { w: "yes", m: "はい", c: "other" }, { w: "no", m: "いいえ", c: "other" }, { w: "please", m: "お願いします", c: "other" },
+                { w: "what", m: "何", c: "other" }, { w: "who", m: "誰", c: "other" }, { w: "where", m: "どこ", c: "other" }, { w: "when", m: "いつ", c: "other" }
+            ],
+            
+            deck: [],
+            idx: 0,
+            
+            init() {
+                this.renderList();
+                this.refreshWOTD();
+                this.navigate('dashboard');
+                document.getElementById('dash-total-count').innerText = this.data.length;
+                document.getElementById('searchInput').oninput = (e) => this.filterList(e.target.value);
+            },
 
-          <div className="w-full grid gap-4">
-            {currentQ.options.map((option) => (
-              <button
-                key={option.id}
-                onClick={() => handleQuizAnswer(option.id)}
-                className="w-full py-4 px-6 bg-white border-2 border-gray-100 rounded-xl shadow-sm text-lg font-bold text-gray-700 hover:border-indigo-500 hover:bg-indigo-50 active:bg-indigo-100 transition text-left"
-              >
-                {option.ja}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
+            navigate(view) {
+                document.querySelectorAll('section').forEach(el => el.classList.add('hidden'));
+                document.getElementById(`view-${view}`).classList.remove('hidden');
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                document.getElementById(`nav-${view}`).classList.add('active');
+                
+                if (view === 'flashcards' && this.deck.length === 0) this.startDeck();
+                window.scrollTo(0,0);
+            },
 
-  return (
-    <div className="min-h-screen bg-slate-50 font-sans text-gray-800 max-w-md mx-auto shadow-2xl overflow-hidden relative">
-      {view === 'home' && <HomeView />}
-      {view === 'learn' && <LearnView />}
-      {view === 'quiz' && <QuizView />}
-    </div>
-  );
-};
+            // --- Dictionary Logic ---
+            renderList(items = this.data) {
+                const body = document.getElementById('dictionaryBody');
+                body.innerHTML = '';
+                
+                items.sort((a,b) => a.w.localeCompare(b.w)).forEach(item => {
+                    const el = document.createElement('div');
+                    el.className = 'bg-white p-4 rounded-xl border border-slate-100 flex justify-between items-center shadow-sm active:bg-slate-50 transition-colors';
+                    
+                    let badgeClass = "bg-gray-100 text-gray-500";
+                    if(item.c === 'noun') badgeClass = "bg-blue-50 text-blue-600";
+                    if(item.c === 'verb') badgeClass = "bg-red-50 text-red-600";
+                    if(item.c === 'adj') badgeClass = "bg-green-50 text-green-600";
+                    if(item.c === 'number') badgeClass = "bg-purple-50 text-purple-600";
 
-export default App;
+                    el.innerHTML = `
+                        <div class="flex flex-col gap-0.5">
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg font-black text-slate-800">${item.w}</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded font-bold uppercase ${badgeClass}">${item.c}</span>
+                            </div>
+                            <span class="text-sm text-slate-500 font-bold">${item.m}</span>
+                        </div>
+                        <button onclick="app.speakWord('${item.w.replace(/'/g, "\\'")}')" class="w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center active:scale-90 active:bg-blue-100 active:text-blue-600 transition-all border border-slate-100">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                    `;
+                    body.appendChild(el);
+                });
+            },
+
+            filterCategory(cat, btn) {
+                document.querySelectorAll('.cat-btn').forEach(b => {
+                    b.classList.remove('bg-slate-800', 'text-white');
+                    b.classList.add('bg-white', 'text-slate-600');
+                });
+                btn.classList.remove('bg-white', 'text-slate-600');
+                btn.classList.add('bg-slate-800', 'text-white');
+
+                const term = document.getElementById('searchInput').value.toLowerCase();
+                const filtered = this.data.filter(i => {
+                    const matchCat = cat === 'all' || i.c === cat || (cat === 'noun' && i.c === 'noun') || (cat === 'verb' && i.c === 'verb') || (cat === 'adj' && i.c === 'adj') || (cat === 'number' && i.c === 'number'); 
+                    const matchTerm = i.w.toLowerCase().includes(term) || i.m.includes(term);
+                    return matchCat && matchTerm;
+                });
+                this.renderList(filtered);
+            },
+
+            filterList(term) {
+                term = term.toLowerCase();
+                // 検索時はカテゴリを「すべて」に戻すUI処理
+                document.querySelectorAll('.cat-btn').forEach(b => {
+                    b.classList.remove('bg-slate-800', 'text-white');
+                    b.classList.add('bg-white', 'text-slate-600');
+                });
+                document.querySelector('.cat-btn.active').classList.add('bg-slate-800', 'text-white');
+
+                const filtered = this.data.filter(i => i.w.toLowerCase().includes(term) || i.m.includes(term));
+                this.renderList(filtered);
+            },
+
+            // --- Flashcard Logic ---
+            startDeck() {
+                this.deck = [...this.data];
+                this.shuffleCards();
+            },
+
+            shuffleCards() {
+                this.deck.sort(() => Math.random() - 0.5);
+                this.idx = 0;
+                this.loadCard();
+            },
+
+            loadCard() {
+                if(this.deck.length === 0) return;
+                const card = this.deck[this.idx];
+                
+                document.getElementById('card-counter').innerText = this.idx + 1;
+                document.getElementById('card-total').innerText = this.deck.length;
+                
+                document.getElementById('card-front').innerText = card.w;
+                document.getElementById('card-cat-badge').innerText = card.c;
+                document.getElementById('card-back').innerText = card.m;
+                
+                document.getElementById('flashcard-inner').classList.remove('rotate-y-180');
+            },
+
+            flipCard() {
+                document.getElementById('flashcard-inner').classList.toggle('rotate-y-180');
+            },
+
+            nextCard() {
+                this.idx = (this.idx + 1) % this.deck.length;
+                this.loadCard();
+            },
+
+            prevCard() {
+                this.idx = (this.idx - 1 + this.deck.length) % this.deck.length;
+                this.loadCard();
+            },
+
+            // --- Utils ---
+            speakWord(text) {
+                if(!text) return;
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = 'en-US'; 
+                u.rate = 1.0; 
+                window.speechSynthesis.speak(u);
+            },
+
+            refreshWOTD() {
+                const item = this.data[Math.floor(Math.random() * this.data.length)];
+                document.getElementById('wotd-word').innerText = item.w;
+                document.getElementById('wotd-meaning').innerText = item.m;
+            }
+        };
+
+        window.onload = () => app.init();
+    </script>
+</body>
+</html>
